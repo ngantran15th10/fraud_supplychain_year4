@@ -1,13 +1,79 @@
 # 🔍 Supply Chain Fraud Detection using Social Network Analysis
 
-**Dự án phân tích:** Ứng dụng Social Network Analysis (SNA) để phát hiện gian lận trong supply chain
+**Project:** Application of Social Network Analysis (SNA) for fraud detection in supply chains
 
 **Dataset:** DataCo Supply Chain Dataset (Kaggle)  
-**Status:** ✅ Hoàn thành (All Q1-Q8 answered)
+
+
+> ⚠️ **NOTE:** This repository does NOT contain data files. See [DOWNLOAD_DATA.md](DOWNLOAD_DATA.md) to download the dataset from Kaggle before running the code.
 
 ---
 
-## 🔄 Quy trình làm việc (Workflow)
+## � Hướng dẫn sử dụng
+
+### **1. Xem kết quả phân tích**
+```powershell
+# Q1-Q2: Dataset và Network Construction
+Get-Content results/RESULTS_Q1_Q2_COMPLETE.txt
+
+# Q3: Centrality Measures
+Get-Content results/RESULTS_Q3_CENTRALITY.txt
+
+# Q4-Q8: Communities, Patterns, Visualization, Implications
+Get-Content results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt
+```
+
+### **2. Visualize network trong Gephi**
+
+#### **Full network (tất cả 20,770 nodes):**
+```
+1. Mở Gephi
+2. File → Open → Chọn: data/network_for_gephi.gexf
+3. Import as "Undirected graph"
+4. Apply layout: ForceAtlas2 (with Prevent Overlap ON)
+5. Color nodes:
+   - Customer nodes = blue
+   - Product nodes = red
+   - Fraud customers (fraud_count > 0) = yellow/orange
+6. Size nodes by degree (products phổ biến → lớn hơn)
+```
+
+#### **Candidate fraud rings (4 communities):**
+```
+1. Mở Gephi
+2. File → Open
+3. Chọn file:
+   - data/subgraphs/community_26.gexf (fraud_rate=11.5%)
+   - data/subgraphs/community_1.gexf (fraud_rate=10.4%)
+   - data/subgraphs/community_3.gexf (fraud_rate=10.2%)
+   - data/subgraphs/community_7.gexf (fraud_rate=10.0%)
+4. Import as "Undirected graph"
+5. Visualize để xem fraud patterns trong mỗi community
+```
+
+### **3. Chạy lại phân tích từ đầu**
+
+Nếu bạn có dataset mới hoặc muốn tái tạo kết quả:
+
+```powershell
+# Bước 1: Phân tích dataset gốc
+python analyze_dataset.py
+
+# Bước 2: Tạo edge list
+python create_edgelist.py
+
+# Bước 3: Build bipartite network
+python build_network.py
+
+# Bước 4: Tính network features
+python calculate_network_features.py
+```
+
+**Lưu ý:** Files Gephi export (`.gexf`) đã được tạo sẵn trong `data/` và `data/subgraphs/`.
+
+---
+
+## �🔄 Workflow
 
 ```
 ┌─────────────────┐
@@ -32,7 +98,7 @@
          ↓
 ┌─────────────────┐
 │  5. ANALYSIS    │  • Communities detected (27 communities via Louvain)
-│                 │  • Fraud rings identified (4 communities với fraud_rate>10%)
+│                 │  • Fraud rings identified (4 communities with fraud_rate>10%)
 │                 │  • Gephi exports created
 └────────┬────────┘
          ↓
@@ -43,100 +109,100 @@
 └─────────────────┘
 ```
 
-### **Giải thích từng bước:**
+### **Step-by-step Explanation:**
 
-**Bước 1: Phân tích dataset**
+**Step 1: Analyze dataset**
 - Input: `DataCoSupplyChainDataset.csv` (180,519 rows, 53 columns)
-- Output: Hiểu cấu trúc dữ liệu, chọn fraud label (Order Status = "SUSPECTED_FRAUD")
+- Output: Understand data structure, select fraud label (Order Status = "SUSPECTED_FRAUD")
 - Script: `analyze_dataset.py`
 
-**Bước 2: Tạo edge list**
-- Input: Dataset gốc
-- Output: `edgelist.csv` (7 cột: customer_id, product_id, sales, quantity, order_date, order_status, is_fraud)
+**Step 2: Create edge list**
+- Input: Original dataset
+- Output: `edgelist.csv` (7 columns: customer_id, product_id, sales, quantity, order_date, order_status, is_fraud)
 - Script: `create_edgelist.py`
-- Mục đích: Đơn giản hóa dữ liệu, chỉ giữ thông tin cần thiết cho network
+- Purpose: Simplify data, keep only necessary information for network
 
-**Bước 3: Build bipartite network**
+**Step 3: Build bipartite network**
 - Input: `edgelist.csv`
 - Output: `bipartite_graph.gpickle` (NetworkX graph object)
 - Script: `build_network.py`
-- Mục đích: Tạo network với 2 loại nodes (customers & products)
+- Purpose: Create network with 2 types of nodes (customers & products)
 
-**Bước 4: Tính network features**
+**Step 4: Calculate network features**
 - Input: `bipartite_graph.gpickle`
 - Output: `network_features.csv` (20,652 customers × 7 features)
 - Script: `calculate_network_features.py`
 - Features: degree, betweenness, closeness, community_id
 
-**Bước 5: Phát hiện fraud patterns**
+**Step 5: Detect fraud patterns**
 - Community detection: Louvain algorithm → 27 communities
 - Fraud ring identification: Communities 26, 1, 3, 7 (fraud_rate 10-11.5%)
-- Export cho Gephi: `.gexf` files cho visualization
+- Export for Gephi: `.gexf` files for visualization
 
-**Bước 6: Viết kết quả**
-- Q1-Q2: Dataset có phù hợp? Network structure như thế nào?
-- Q3: Centrality measures phân biệt fraud vs normal?
+**Step 6: Write results**
+- Q1-Q2: Is the dataset suitable? What is the network structure?
+- Q3: Do centrality measures distinguish fraud vs normal?
 - Q4-Q8: Communities, fraud patterns, visualization, implications
 
 
-Thuật toán Louvain phát hiện **27 communities** (ID từ 0-26). Chúng ta chọn 4 communities có **fraud rate cao nhất**:
-- Community 26: fraud_rate = **11.5%** (cao nhất)
-- Community 1: fraud_rate = **10.4%** (thứ 2)
-- Community 3: fraud_rate = **10.2%** (thứ 3)
-- Community 7: fraud_rate = **10.0%** (thứ 4)
+The Louvain algorithm detected **27 communities** (IDs from 0-26). We selected 4 communities with the **highest fraud rates**:
+- Community 26: fraud_rate = **11.5%** (highest)
+- Community 1: fraud_rate = **10.4%** (2nd)
+- Community 3: fraud_rate = **10.2%** (3rd)
+- Community 7: fraud_rate = **10.0%** (4th)
 
-→ Đây là các "fraud rings" đáng nghi ngờ nhất để phân tích chi tiết.
+→ These are the most suspicious "fraud rings" for detailed analysis.
 
 ---
 
-## 📂 Cấu trúc thư mục
+## 📂 Directory Structure
 
 ```
 fraud_supplychain/
 │
-├── data/                          # Dữ liệu và network files
-│   ├── DataCoSupplyChainDataset.csv         # Dataset gốc từ Kaggle (95.9 MB)
-│   ├── DescriptionDataCoSupplyChain.csv     # Mô tả các cột trong dataset
-│   ├── edgelist.csv                         # Edge list cho network (7 cột chính)
+├── data/                          # Data and network files
+│   ├── DataCoSupplyChainDataset.csv         # Original dataset from Kaggle (95.9 MB)
+│   ├── DescriptionDataCoSupplyChain.csv     # Description of dataset columns
+│   ├── edgelist.csv                         # Edge list for network (7 main columns)
 │   ├── bipartite_graph.gpickle              # Network object (20,770 nodes, 101,196 edges)
-│   ├── graph_info.pkl                       # Metadata tóm tắt về network
-│   ├── network_features.csv                 # Network features cho mỗi customer
-│   ├── community_stats_nopandas.csv         # Thống kê các communities
-│   ├── community_top_products_nopandas.json # Top products mỗi community
-│   ├── network_for_gephi.gexf               # Network export cho Gephi (full)
-│   └── subgraphs/                           # Subgraphs của candidate fraud rings
+│   ├── graph_info.pkl                       # Metadata summary about network
+│   ├── network_features.csv                 # Network features for each customer
+│   ├── community_stats_nopandas.csv         # Community statistics
+│   ├── community_top_products_nopandas.json # Top products per community
+│   ├── network_for_gephi.gexf               # Network export for Gephi (full)
+│   └── subgraphs/                           # Subgraphs of candidate fraud rings
 │       ├── community_26.gexf                # Community 26 (fraud_rate=11.5%)
 │       ├── community_1.gexf                 # Community 1 (fraud_rate=10.4%)
 │       ├── community_3.gexf                 # Community 3 (fraud_rate=10.2%)
 │       └── community_7.gexf                 # Community 7 (fraud_rate=10.0%)
 │
-├── results/                       # Kết quả phân tích (Q1-Q8)
+├── results/                       # Analysis results (Q1-Q8)
 │   ├── RESULTS_Q1_Q2_COMPLETE.txt           # Dataset & Network Construction
 │   ├── RESULTS_Q3_CENTRALITY.txt            # Centrality Measures Analysis
 │   └── RESULTS_Q4_Q5_Q6_Q7_Q8.txt           # Communities, Patterns, Viz, Implications
 │
-├── analyze_dataset.py             # Script: phân tích dataset, tạo fraud labels
-├── create_edgelist.py             # Script: tạo edge list từ dataset
-├── build_network.py               # Script: xây dựng bipartite network
-├── calculate_network_features.py  # Script: tính network features
+├── analyze_dataset.py             # Script: analyze dataset, create fraud labels
+├── create_edgelist.py             # Script: create edge list from dataset
+├── build_network.py               # Script: build bipartite network
+├── calculate_network_features.py  # Script: calculate network features
 ├── .gitignore                     # Git ignore file
 │
-└── README.md                      # File hướng dẫn này
+└── README.md                      # This guide file
 ```
 
 ---
 
-## 🎯 Tóm tắt dự án
+## 🎯 Project Summary
 
-### **Mục tiêu nghiên cứu:**
-Trả lời 3 câu hỏi chính (Research Questions):
-1. **RQ1:** Có thể adapt SNA code cho supply chain fraud detection không?
-2. **RQ2:** Network centrality measures so với traditional features như thế nào?
-3. **RQ3:** Kết hợp features có cải thiện accuracy không?
+### **Research Objectives:**
+Answer 3 main research questions:
+1. **RQ1:** Can SNA code be adapted for supply chain fraud detection?
+2. **RQ2:** How do network centrality measures compare to traditional features?
+3. **RQ3:** Does combining features improve accuracy?
 
 ### **Dataset:**
-- **Nguồn:** DataCo Supply Chain (Kaggle)
-- **Kích thước:** 180,519 transactions, 20,652 customers, 118 products
+- **Source:** DataCo Supply Chain (Kaggle)
+- **Size:** 180,519 transactions, 20,652 customers, 118 products
 - **Fraud definition:** Order Status = "SUSPECTED_FRAUD" (2.25% fraud rate)
 
 ### **Network type:**
@@ -144,17 +210,17 @@ Trả lời 3 câu hỏi chính (Research Questions):
 - **Total nodes:** 20,770
 - **Total edges:** 101,196 (unique customer-product pairs)
 - **Structure:** 19 connected components, largest = 12,431 nodes
-- **Density:** 0.000469 (sparse network - TỐT cho fraud detection)
+- **Density:** 0.000469 (sparse network - GOOD for fraud detection)
 
 ---
 
-## 📊 Kết quả chính (Key Findings)
+## 📊 Key Findings
 
 ### **Q1-Q2: Dataset & Network Construction**
-✅ Dataset phù hợp để build bipartite network  
-✅ Network có power-law distribution (scale-free)  
-✅ Fraud customers có degree cao hơn (+57%)  
-📄 **Chi tiết:** `results/RESULTS_Q1_Q2_COMPLETE.txt`
+✅ Dataset suitable for building bipartite network  
+✅ Network has power-law distribution (scale-free)  
+✅ Fraud customers have higher degree (+57%)  
+📄 **Details:** `results/RESULTS_Q1_Q2_COMPLETE.txt`
 
 ### **Q3: Centrality Measures**
 | Measure | Fraud Mean | Normal Mean | % Difference | Ranking |
@@ -181,7 +247,11 @@ Trả lời 3 câu hỏi chính (Research Questions):
 
 ---
 
-## 🚀 Hướng dẫn sử dụng
+## 📈 Network Features
+
+---
+
+## �🚀 Hướng dẫn sử dụng
 
 ### **1. Xem kết quả phân tích**
 ```powershell
