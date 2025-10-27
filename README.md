@@ -7,7 +7,44 @@
 
 ---
 
-## 🔄 Quy trình làm việc (Workflow)
+## � Hướng dẫn sử dụng
+
+### **1. Xem kết quả phân tích**
+```powershell
+# Q1-Q2: Dataset và Network Construction
+Get-Content results/RESULTS_Q1_Q2_COMPLETE.txt
+
+# Q3: Centrality Measures
+Get-Content results/RESULTS_Q3_CENTRALITY.txt
+
+# Q4-Q8: Communities, Patterns, Visualization, Implications
+Get-Content results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt
+```
+
+### **2. Visualize network trong Gephi**
+
+**Full network:**
+- Mở Gephi → File → Open → `data/network_for_gephi.gexf`
+- Apply layout: ForceAtlas2 (Prevent Overlap ON)
+- Color: Customer (blue), Product (red), Fraud (yellow/orange)
+
+**Fraud rings (4 communities):**
+- `data/subgraphs/community_26.gexf` (fraud_rate=11.5%)
+- `data/subgraphs/community_1.gexf` (fraud_rate=10.4%)
+- `data/subgraphs/community_3.gexf` (fraud_rate=10.2%)
+- `data/subgraphs/community_7.gexf` (fraud_rate=10.0%)
+
+### **3. Chạy lại phân tích**
+```powershell
+python analyze_dataset.py
+python create_edgelist.py
+python build_network.py
+python calculate_network_features.py
+```
+
+---
+
+## �🔄 Quy trình làm việc (Workflow)
 
 ```
 ┌─────────────────┐
@@ -43,49 +80,7 @@
 └─────────────────┘
 ```
 
-### **Giải thích từng bước:**
-
-**Bước 1: Phân tích dataset**
-- Input: `DataCoSupplyChainDataset.csv` (180,519 rows, 53 columns)
-- Output: Hiểu cấu trúc dữ liệu, chọn fraud label (Order Status = "SUSPECTED_FRAUD")
-- Script: `analyze_dataset.py`
-
-**Bước 2: Tạo edge list**
-- Input: Dataset gốc
-- Output: `edgelist.csv` (7 cột: customer_id, product_id, sales, quantity, order_date, order_status, is_fraud)
-- Script: `create_edgelist.py`
-- Mục đích: Đơn giản hóa dữ liệu, chỉ giữ thông tin cần thiết cho network
-
-**Bước 3: Build bipartite network**
-- Input: `edgelist.csv`
-- Output: `bipartite_graph.gpickle` (NetworkX graph object)
-- Script: `build_network.py`
-- Mục đích: Tạo network với 2 loại nodes (customers & products)
-
-**Bước 4: Tính network features**
-- Input: `bipartite_graph.gpickle`
-- Output: `network_features.csv` (20,652 customers × 7 features)
-- Script: `calculate_network_features.py`
-- Features: degree, betweenness, closeness, community_id
-
-**Bước 5: Phát hiện fraud patterns**
-- Community detection: Louvain algorithm → 27 communities
-- Fraud ring identification: Communities 26, 1, 3, 7 (fraud_rate 10-11.5%)
-- Export cho Gephi: `.gexf` files cho visualization
-
-**Bước 6: Viết kết quả**
-- Q1-Q2: Dataset có phù hợp? Network structure như thế nào?
-- Q3: Centrality measures phân biệt fraud vs normal?
-- Q4-Q8: Communities, fraud patterns, visualization, implications
-
-
-Thuật toán Louvain phát hiện **27 communities** (ID từ 0-26). Chúng ta chọn 4 communities có **fraud rate cao nhất**:
-- Community 26: fraud_rate = **11.5%** (cao nhất)
-- Community 1: fraud_rate = **10.4%** (thứ 2)
-- Community 3: fraud_rate = **10.2%** (thứ 3)
-- Community 7: fraud_rate = **10.0%** (thứ 4)
-
-→ Đây là các "fraud rings" đáng nghi ngờ nhất để phân tích chi tiết.
+**Community IDs:** Louvain phát hiện 27 communities (ID 0-26). Top 4 fraud rings: Communities 26, 1, 3, 7 (fraud_rate 10-11.5%)
 
 ---
 
@@ -181,71 +176,7 @@ Trả lời 3 câu hỏi chính (Research Questions):
 
 ---
 
-## 🚀 Hướng dẫn sử dụng
-
-### **1. Xem kết quả phân tích**
-```powershell
-# Q1-Q2: Dataset và Network Construction
-Get-Content results/RESULTS_Q1_Q2_COMPLETE.txt
-
-# Q3: Centrality Measures
-Get-Content results/RESULTS_Q3_CENTRALITY.txt
-
-# Q4-Q8: Communities, Patterns, Visualization, Implications
-Get-Content results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt
-```
-
-### **2. Visualize network trong Gephi**
-
-#### **Full network (tất cả 20,770 nodes):**
-```
-1. Mở Gephi
-2. File → Open → Chọn: data/network_for_gephi.gexf
-3. Import as "Undirected graph"
-4. Apply layout: ForceAtlas2 (with Prevent Overlap ON)
-5. Color nodes:
-   - Customer nodes = blue
-   - Product nodes = red
-   - Fraud customers (fraud_count > 0) = yellow/orange
-6. Size nodes by degree (products phổ biến → lớn hơn)
-```
-
-#### **Candidate fraud rings (4 communities):**
-```
-1. Mở Gephi
-2. File → Open
-3. Chọn file:
-   - data/subgraphs/community_26.gexf (fraud_rate=11.5%)
-   - data/subgraphs/community_1.gexf (fraud_rate=10.4%)
-   - data/subgraphs/community_3.gexf (fraud_rate=10.2%)
-   - data/subgraphs/community_7.gexf (fraud_rate=10.0%)
-4. Import as "Undirected graph"
-5. Visualize để xem fraud patterns trong mỗi community
-```
-
-### **3. Chạy lại phân tích từ đầu**
-
-Nếu bạn có dataset mới hoặc muốn tái tạo kết quả:
-
-```powershell
-# Bước 1: Phân tích dataset gốc
-python analyze_dataset.py
-
-# Bước 2: Tạo edge list
-python create_edgelist.py
-
-# Bước 3: Build bipartite network
-python build_network.py
-
-# Bước 4: Tính network features
-python calculate_network_features.py
-```
-
-**Lưu ý:** Files Gephi export (`.gexf`) đã được tạo sẵn trong `data/` và `data/subgraphs/`.
-
----
-
-## 📈 Network Features
+##  Network Features
 
 Mỗi customer có 7 features trong `data/network_features.csv`:
 
@@ -263,16 +194,8 @@ Mỗi customer có 7 features trong `data/network_features.csv`:
 
 ## 🎨 Visualization Files
 
-### **Full Network:**
-- `data/network_for_gephi.gexf` — Format GEXF cho Gephi (khuyên dùng)
-
-### **Fraud Ring Subgraphs:**
-- `data/subgraphs/community_26.gexf` — Community có fraud rate cao nhất (11.5%)
-- `data/subgraphs/community_1.gexf` — Community fraud rate 10.4%
-- `data/subgraphs/community_3.gexf` — Community fraud rate 10.2%
-- `data/subgraphs/community_7.gexf` — Community fraud rate 10.0%
-
-**Tất cả files đều ở format GEXF** - mở trực tiếp trong Gephi (File → Open).
+**Full Network:** `data/network_for_gephi.gexf`  
+**Fraud Rings:** `data/subgraphs/community_{26,1,3,7}.gexf`
 
 ---
 
@@ -333,31 +256,4 @@ Avg degree (normal):    4.71
 
 ---
 
-## 📝 Research Questions Coverage
-
-| Question | File | Status |
-|----------|------|--------|
-| **Q1.1:** Dataset structure? | `results/RESULTS_Q1_Q2_COMPLETE.txt` | ✅ |
-| **Q1.2:** Phù hợp build network? | `results/RESULTS_Q1_Q2_COMPLETE.txt` | ✅ |
-| **Q1.3:** File hiện có? | `results/RESULTS_Q1_Q2_COMPLETE.txt` | ✅ |
-| **Q2.1:** Loại network phù hợp? | `results/RESULTS_Q1_Q2_COMPLETE.txt` | ✅ |
-| **Q2.2:** Network đặc điểm? | `results/RESULTS_Q1_Q2_COMPLETE.txt` | ✅ |
-| **Q2.3:** Degree distribution? | `results/RESULTS_Q1_Q2_COMPLETE.txt` | ✅ |
-| **Q3.1:** Degree centrality? | `results/RESULTS_Q3_CENTRALITY.txt` | ✅ |
-| **Q3.2:** Betweenness centrality? | `results/RESULTS_Q3_CENTRALITY.txt` | ✅ |
-| **Q3.3:** Closeness centrality? | `results/RESULTS_Q3_CENTRALITY.txt` | ✅ |
-| **Q3.4:** So sánh 3 measures? | `results/RESULTS_Q3_CENTRALITY.txt` | ✅ |
-| **Q4.1:** Số communities? | `results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt` | ✅ |
-| **Q4.2:** Communities ý nghĩa? | `results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt` | ✅ |
-| **Q4.3:** Communities khác nhau? | `results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt` | ✅ |
-| **Q5.1:** Fraud patterns? | `results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt` | ✅ |
-| **Q5.2:** Fraud rings? | `results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt` | ✅ |
-| **Q5.3:** Network features giúp? | `results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt` | ✅ |
-| **Q6.1:** Network visualization? | `data/subgraphs/` + Gephi files | ✅ |
-| **Q6.2:** Degree distribution? | `results/RESULTS_Q3_CENTRALITY.txt` | ✅ |
-| **Q7.1:** Practical applications? | `results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt` | ✅ |
-| **Q7.2:** Áp dụng thực tế? | `results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt` | ✅ |
-| **Q8.1:** Limitations? | `results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt` | ✅ |
-| **Q8.2:** Chưa làm được? | `results/RESULTS_Q4_Q5_Q6_Q7_Q8.txt` | ✅ |
-
----
+**🎓 Academic Project - Year 4 | Social Network Analysis for Fraud Detection**
