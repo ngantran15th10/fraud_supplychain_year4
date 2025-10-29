@@ -86,40 +86,6 @@ def build_model(input_dim, use_focal_loss=True, focal_gamma=1.5, focal_alpha=0.6
         fn_cost: Cost multiplier for False Negatives when use_cost_sensitive=True
     
     Returns:
-        Compiled Keras model
-    """
-    model = Sequential([
-        # Input layer with BatchNormalization
-        Dense(256, activation='relu', input_shape=(input_dim,)),
-        BatchNormalization(),
-        Dropout(0.3),
-        
-        # Hidden layer 1
-        Dense(128, activation='relu'),
-        BatchNormalization(),
-        Dropout(0.3),
-        
-        # Hidden layer 2
-        Dense(64, activation='relu'),
-        BatchNormalization(),
-        Dropout(0.2),
-        
-        # Output layer
-        Dense(1, activation='sigmoid')
-    ])
-    
-    # Choose loss function
-    if use_cost_sensitive:
-        loss_fn = cost_sensitive_focal_loss(gamma=focal_gamma, alpha=focal_alpha, fn_cost=fn_cost)
-        print(f"Using Cost-Sensitive Focal Loss (gamma={focal_gamma}, alpha={focal_alpha}, fn_cost={fn_cost})")
-    elif use_focal_loss:
-        loss_fn = focal_loss(gamma=focal_gamma, alpha=focal_alpha)
-        print(f"Using Focal Loss (gamma={focal_gamma}, alpha={focal_alpha})")
-    else:
-        loss_fn = 'binary_crossentropy'
-        print("Using Binary Crossentropy")
-    
-    Returns:
         Compiled Keras Sequential model
     """
     clf = Sequential(name='Combined_Model')
@@ -142,14 +108,18 @@ def build_model(input_dim, use_focal_loss=True, focal_gamma=1.5, focal_alpha=0.6
     # Output layer (binary classification)
     clf.add(Dense(1, activation='sigmoid', name='output'))
     
-    # Compile model with Focal Loss or Binary Crossentropy
-    if use_focal_loss:
+    # Choose loss function
+    if use_cost_sensitive:
+        print(f"Using Cost-Sensitive Focal Loss (gamma={focal_gamma}, alpha={focal_alpha}, fn_cost={fn_cost})")
+        loss_function = cost_sensitive_focal_loss(gamma=focal_gamma, alpha=focal_alpha, fn_cost=fn_cost)
+    elif use_focal_loss:
         print(f"Using Focal Loss (gamma={focal_gamma}, alpha={focal_alpha})")
         loss_function = focal_loss(gamma=focal_gamma, alpha=focal_alpha)
     else:
         print("Using Binary Crossentropy")
         loss_function = 'binary_crossentropy'
     
+    # Compile model
     clf.compile(
         optimizer='adam',
         loss=loss_function,
@@ -157,3 +127,4 @@ def build_model(input_dim, use_focal_loss=True, focal_gamma=1.5, focal_alpha=0.6
     )
     
     return clf
+
