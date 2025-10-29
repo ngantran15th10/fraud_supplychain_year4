@@ -62,9 +62,17 @@ def main():
     print(f"Validation set: {X_val.shape}")
     print(f"Test set: {X_test_pca.shape}")
     
-    # 8. Build model with Focal Loss
+    # 8. Build model with improvements
     input_dim = X_train_pca.shape[1]
-    fraud_model = model.build_model(input_dim, use_focal_loss=config.USE_FOCAL_LOSS)
+    print(f"\nBuilding model with {input_dim} input features...")
+    print(f"- BatchNormalization: Enabled")
+    print(f"- Focal Loss: gamma={config.FOCAL_GAMMA}, alpha={config.FOCAL_ALPHA}")
+    fraud_model = model.build_model(
+        input_dim, 
+        use_focal_loss=config.USE_FOCAL_LOSS,
+        focal_gamma=config.FOCAL_GAMMA,
+        focal_alpha=config.FOCAL_ALPHA
+    )
     
     print("\nModel Architecture:")
     fraud_model.summary()
@@ -74,7 +82,12 @@ def main():
         fraud_model, X_train_final, y_train_final, X_val, y_val, config
     )
     
-    # 10. Evaluate model on test set with custom threshold
+    # 10. Evaluate model on test set with auto threshold
+    print(f"\n{'='*60}")
+    print("EVALUATION")
+    print(f"{'='*60}")
+    print(f"Auto-finding optimal threshold: {config.THRESHOLD == 'auto'}")
+    
     metrics = predict.evaluate_model(
         trained_model, X_test_pca, y_test, config, threshold=config.THRESHOLD
     )

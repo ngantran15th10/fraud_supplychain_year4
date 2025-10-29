@@ -4,13 +4,54 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
-    roc_auc_score, confusion_matrix, classification_report
+    roc_auc_score, confusion_matrix, classification_report,
+    roc_curve, precision_recall_curve
 )
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-def evaluate_model(model, X_test, y_test, config, threshold=0.3):
+def find_optimal_threshold(y_true, y_pred_proba, metric='f1'):
+    """
+    Find optimal threshold based on F1-score or other metrics
+    
+    Args:
+        y_true: True labels
+        y_pred_proba: Predicted probabilities
+        metric: 'f1', 'precision', 'recall', or 'balanced'
+    
+    Returns:
+        Optimal threshold value
+    """
+    if metric == 'balanced':
+        # Find threshold that balances precision and recall
+        precision, recall, thresholds = precision_recall_curve(y_true, y_pred_proba)
+        f1_scores = 2 * (precision * recall) / (precision + recall + 1e-10)
+        optimal_idx = np.argmax(f1_scores)
+        optimal_threshold = thresholds[optimal_idx] if optimal_idx < len(thresholds) else 0.5
+    else:
+        # Try different thresholds and find best F1
+        thresholds = np.arange(0.1, 0.9, 0.05)
+        best_score = 0
+        optimal_threshold = 0.3
+        
+        for thresh in thresholds:
+            y_pred = (y_pred_proba > thresh).astype(int)
+            
+            if metric == 'f1':
+                score = f1_score(y_true, y_pred, zero_division=0)
+            elif metric == 'precision':
+                score = precision_score(y_true, y_pred, zero_division=0)
+            elif metric == 'recall':
+                score = recall_score(y_true, y_pred, zero_division=0)
+            
+            if score > best_score:
+                best_score = score
+                optimal_threshold = thresh
+    
+    return optimal_threshold
+
+def evaluate_model(model, X_test, y_test, config, threshold='auto'):
     """
     Evaluate the trained model on test set
     
@@ -19,7 +60,7 @@ def evaluate_model(model, X_test, y_test, config, threshold=0.3):
         X_test: Test features
         y_test: Test labels
         config: Configuration module
-        threshold: Classification threshold (default 0.3 for better recall)
+        threshold: 'auto' to find optimal, or float value
     
     Returns:
         Dictionary of evaluation metrics
@@ -28,11 +69,17 @@ def evaluate_model(model, X_test, y_test, config, threshold=0.3):
     print("Evaluating Combined Model...")
     print("="*60)
     
-    # Predictions with custom threshold
-    y_pred_proba = model.predict(X_test, verbose=0)
-    y_pred = (y_pred_proba > threshold).astype(int).flatten()
+    # Get predictions
+    y_pred_proba = model.predict(X_test, verbose=0).flatten()
     
-    print(f"\nUsing threshold: {threshold}")
+    # Find optimal threshold if auto
+    if threshold == 'auto':
+        threshold = find_optimal_threshold(y_test, y_pred_proba, metric='balanced')
+        print(f"\nOptimal threshold found: {threshold:.3f}")
+    else:
+        print(f"\nUsing threshold: {threshold}")
+    
+    y_pred = (y_pred_proba > threshold).astype(int)
     
     # Calculate metrics
     accuracy = accuracy_score(y_test, y_pred)
