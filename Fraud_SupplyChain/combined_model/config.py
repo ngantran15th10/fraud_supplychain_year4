@@ -17,7 +17,7 @@ BATCH_SIZE = 32
 VALIDATION_SPLIT = 0.2
 
 # Evaluation
-THRESHOLD = 0.3  # Fixed threshold to prioritize Recall in fraud detection
+THRESHOLD = 0.25  # Lower threshold to increase Recall (target: 70-75%)
 
 # SMOTE
 SAMPLING_STRATEGY = 0.6  # Increased from 0.5: Fraud = 60% of Not Fraud

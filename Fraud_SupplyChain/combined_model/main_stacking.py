@@ -27,7 +27,7 @@ sys.path.append(current_dir)
 import config
 from data_loader import load_data, split_features_labels, split_data, apply_smote
 from model import build_model
-from predict import find_optimal_threshold
+from predict import find_optimal_threshold, find_optimal_threshold_with_constraint
 
 print("=" * 70)
 print("STACKING ENSEMBLE - HYBRID MODEL FOR FRAUD DETECTION")
@@ -222,13 +222,16 @@ print("\n" + "=" * 70)
 print("STEP 4: EVALUATING STACKING ENSEMBLE")
 print("=" * 70)
 
-# Find optimal threshold or use fixed threshold
-if config.THRESHOLD == 'auto':
-    optimal_threshold = find_optimal_threshold(y_test, meta_test_pred)
-    print(f"\nOptimal threshold found: {optimal_threshold:.3f}")
-else:
-    optimal_threshold = config.THRESHOLD
-    print(f"\nUsing fixed threshold: {optimal_threshold}")
+# Find optimal threshold with Recall constraint
+print("\nFinding optimal threshold with minimum Recall = 60%...")
+optimal_threshold, threshold_metrics = find_optimal_threshold_with_constraint(
+    y_test, meta_test_pred, min_recall=0.60
+)
+
+print(f"\nOptimal threshold found: {optimal_threshold:.3f}")
+print(f"  Recall:    {threshold_metrics['recall']:.4f}")
+print(f"  Precision: {threshold_metrics['precision']:.4f}")
+print(f"  F1-Score:  {threshold_metrics['f1']:.4f}")
 
 # Make final predictions
 y_pred = (meta_test_pred >= optimal_threshold).astype(int)

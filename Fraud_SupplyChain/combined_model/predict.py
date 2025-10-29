@@ -11,6 +11,77 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
+def find_optimal_threshold_with_constraint(y_true, y_pred_proba, min_recall=0.60):
+    """
+    Find optimal threshold that maintains minimum Recall while maximizing Precision/F1
+    
+    Args:
+        y_true: True labels
+        y_pred_proba: Predicted probabilities
+        min_recall: Minimum acceptable recall (default 0.60 = 60%)
+    
+    Returns:
+        Optimal threshold value, metrics at that threshold
+    """
+    thresholds = np.arange(0.05, 0.95, 0.01)
+    best_f1 = 0
+    optimal_threshold = 0.3
+    best_metrics = {}
+    
+    results = []
+    
+    for thresh in thresholds:
+        y_pred = (y_pred_proba >= thresh).astype(int)
+        
+        recall = recall_score(y_true, y_pred, zero_division=0)
+        precision = precision_score(y_true, y_pred, zero_division=0)
+        f1 = f1_score(y_true, y_pred, zero_division=0)
+        
+        # Only consider thresholds that meet minimum recall constraint
+        if recall >= min_recall:
+            results.append({
+                'threshold': thresh,
+                'recall': recall,
+                'precision': precision,
+                'f1': f1
+            })
+            
+            # Update best if F1 is higher
+            if f1 > best_f1:
+                best_f1 = f1
+                optimal_threshold = thresh
+                best_metrics = {
+                    'threshold': thresh,
+                    'recall': recall,
+                    'precision': precision,
+                    'f1': f1
+                }
+    
+    if not results:
+        # If no threshold meets min_recall, find threshold with highest recall
+        print(f"WARNING: No threshold achieves Recall >= {min_recall:.1%}")
+        print("Finding threshold with maximum Recall instead...")
+        
+        for thresh in thresholds:
+            y_pred = (y_pred_proba >= thresh).astype(int)
+            recall = recall_score(y_true, y_pred, zero_division=0)
+            precision = precision_score(y_true, y_pred, zero_division=0)
+            f1 = f1_score(y_true, y_pred, zero_division=0)
+            
+            results.append({
+                'threshold': thresh,
+                'recall': recall,
+                'precision': precision,
+                'f1': f1
+            })
+        
+        # Sort by F1-score descending
+        results.sort(key=lambda x: x['f1'], reverse=True)
+        best_metrics = results[0]
+        optimal_threshold = best_metrics['threshold']
+    
+    return optimal_threshold, best_metrics
+
 def find_optimal_threshold(y_true, y_pred_proba, metric='f1'):
     """
     Find optimal threshold based on F1-score or other metrics
