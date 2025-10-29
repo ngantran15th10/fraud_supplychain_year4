@@ -49,8 +49,15 @@ def scale_data(X_train, X_test):
     
     return X_train_scaled, X_test_scaled, scaler
 
-def apply_smote(X_train, y_train, random_state=42):
-    """Apply SMOTE to handle class imbalance"""
+def apply_smote(X_train, y_train, random_state=42, sampling_strategy=0.5):
+    """
+    Apply SMOTE to handle class imbalance
+    
+    Args:
+        sampling_strategy: float, target ratio of minority/majority class
+                          0.5 = minority will be 50% of majority (recommended)
+                          1.0 = fully balanced (default SMOTE)
+    """
     print(f"\nBefore SMOTE: {X_train.shape}")
     print(f"Class distribution: {pd.Series(y_train).value_counts().to_dict()}")
     
@@ -64,10 +71,10 @@ def apply_smote(X_train, y_train, random_state=42):
         print("WARNING: Found infinite values in training data. Replacing with 0...")
         X_train = np.nan_to_num(X_train, posinf=0.0, neginf=0.0)
     
-    smote = SMOTE(random_state=random_state)
+    smote = SMOTE(random_state=random_state, sampling_strategy=sampling_strategy)
     X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
     
-    print(f"After SMOTE: {X_train_res.shape}")
+    print(f"After SMOTE (strategy={sampling_strategy}): {X_train_res.shape}")
     print(f"Class distribution: {pd.Series(y_train_res).value_counts().to_dict()}")
     
     return X_train_res, y_train_res

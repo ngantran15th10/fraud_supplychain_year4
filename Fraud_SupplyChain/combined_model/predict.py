@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-def evaluate_model(model, X_test, y_test, config):
+def evaluate_model(model, X_test, y_test, config, threshold=0.3):
     """
     Evaluate the trained model on test set
     
@@ -19,6 +19,7 @@ def evaluate_model(model, X_test, y_test, config):
         X_test: Test features
         y_test: Test labels
         config: Configuration module
+        threshold: Classification threshold (default 0.3 for better recall)
     
     Returns:
         Dictionary of evaluation metrics
@@ -27,15 +28,17 @@ def evaluate_model(model, X_test, y_test, config):
     print("Evaluating Combined Model...")
     print("="*60)
     
-    # Predictions
+    # Predictions with custom threshold
     y_pred_proba = model.predict(X_test, verbose=0)
-    y_pred = (y_pred_proba > 0.5).astype(int).flatten()
+    y_pred = (y_pred_proba > threshold).astype(int).flatten()
+    
+    print(f"\nUsing threshold: {threshold}")
     
     # Calculate metrics
     accuracy = accuracy_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred, zero_division=0)
+    recall = recall_score(y_test, y_pred, zero_division=0)
+    f1 = f1_score(y_test, y_pred, zero_division=0)
     roc_auc = roc_auc_score(y_test, y_pred_proba)
     
     # Confusion matrix

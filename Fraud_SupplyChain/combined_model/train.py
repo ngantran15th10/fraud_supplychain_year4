@@ -1,6 +1,8 @@
 ## Model Training for Combined Fraud Detection
 
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
+from sklearn.utils.class_weight import compute_class_weight
+import numpy as np
 import os
 
 def train_model(model, X_train, y_train, X_val, y_val, config):
@@ -20,6 +22,17 @@ def train_model(model, X_train, y_train, X_val, y_val, config):
     """
     # Create results directory if not exists
     os.makedirs(config.RESULTS_PATH, exist_ok=True)
+    
+    # Calculate class weights to handle imbalance
+    class_weights = compute_class_weight(
+        'balanced',
+        classes=np.unique(y_train),
+        y=y_train
+    )
+    class_weight_dict = {0: class_weights[0], 1: class_weights[1]}
+    
+    print(f"\nClass weights: {class_weight_dict}")
+    print(f"Fraud class weight is {class_weights[1]/class_weights[0]:.2f}x higher")
     
     # Callbacks
     checkpoint = ModelCheckpoint(
@@ -46,12 +59,13 @@ def train_model(model, X_train, y_train, X_val, y_val, config):
     print("Training Combined Model (Transaction + Network)...")
     print("="*60)
     
-    # Train the model
+    # Train the model with class weights
     history = model.fit(
         X_train, y_train,
         epochs=config.EPOCHS,
         batch_size=config.BATCH_SIZE,
         validation_data=(X_val, y_val),
+        class_weight=class_weight_dict,  # Add class weight
         callbacks=[checkpoint, early_stop, csv_logger],
         verbose=1
     )

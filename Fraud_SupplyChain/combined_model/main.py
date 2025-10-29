@@ -30,9 +30,11 @@ def main():
     # 4. Scale data
     X_train_scaled, X_test_scaled, scaler = data_loader.scale_data(X_train, X_test)
     
-    # 5. Apply SMOTE to training data
+    # 5. Apply SMOTE to training data with better sampling strategy
     X_train_res, y_train_res = data_loader.apply_smote(
-        X_train_scaled, y_train, random_state=config.RANDOM_STATE
+        X_train_scaled, y_train, 
+        random_state=config.RANDOM_STATE,
+        sampling_strategy=config.SAMPLING_STRATEGY
     )
     
     # 6. Clean NaN/Inf before PCA
@@ -60,9 +62,9 @@ def main():
     print(f"Validation set: {X_val.shape}")
     print(f"Test set: {X_test_pca.shape}")
     
-    # 8. Build model
+    # 8. Build model with Focal Loss
     input_dim = X_train_pca.shape[1]
-    fraud_model = model.build_model(input_dim)
+    fraud_model = model.build_model(input_dim, use_focal_loss=config.USE_FOCAL_LOSS)
     
     print("\nModel Architecture:")
     fraud_model.summary()
@@ -72,8 +74,10 @@ def main():
         fraud_model, X_train_final, y_train_final, X_val, y_val, config
     )
     
-    # 10. Evaluate model on test set
-    metrics = predict.evaluate_model(trained_model, X_test_pca, y_test, config)
+    # 10. Evaluate model on test set with custom threshold
+    metrics = predict.evaluate_model(
+        trained_model, X_test_pca, y_test, config, threshold=config.THRESHOLD
+    )
     
     print("\n" + "="*60)
     print("COMBINED MODEL COMPLETED!")
