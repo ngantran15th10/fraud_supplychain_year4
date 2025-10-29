@@ -25,7 +25,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
 import config
-from data_loader import load_data, apply_smote
+from data_loader import load_data, split_features_labels, split_data, apply_smote
 from model import build_model
 from predict import find_optimal_threshold
 
@@ -48,8 +48,11 @@ print("STEP 1: LOADING DATA")
 print("=" * 70)
 
 # Load data
-X_train, X_test, y_train, y_test = load_data(config.DATA_PATH)
-print(f"Train set: {X_train.shape[0]} samples")
+df = load_data(config.DATA_PATH)
+X, y = split_features_labels(df)
+X_train, X_test, y_train, y_test = split_data(X, y, test_size=0.2, random_state=config.RANDOM_STATE)
+
+print(f"\nTrain set: {X_train.shape[0]} samples")
 print(f"Test set: {X_test.shape[0]} samples")
 print(f"Fraud ratio in train: {y_train.sum() / len(y_train) * 100:.2f}%")
 print(f"Fraud ratio in test: {y_test.sum() / len(y_test) * 100:.2f}%")
