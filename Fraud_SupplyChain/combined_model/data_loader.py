@@ -54,6 +54,16 @@ def apply_smote(X_train, y_train, random_state=42):
     print(f"\nBefore SMOTE: {X_train.shape}")
     print(f"Class distribution: {pd.Series(y_train).value_counts().to_dict()}")
     
+    # Check and handle NaN values
+    if np.isnan(X_train).any():
+        print("WARNING: Found NaN values in training data. Replacing with 0...")
+        X_train = np.nan_to_num(X_train, nan=0.0)
+    
+    # Check for infinite values
+    if np.isinf(X_train).any():
+        print("WARNING: Found infinite values in training data. Replacing with 0...")
+        X_train = np.nan_to_num(X_train, posinf=0.0, neginf=0.0)
+    
     smote = SMOTE(random_state=random_state)
     X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
     
