@@ -76,9 +76,16 @@ def train_ensemble_models():
             random_state=seed
         )
         
-        # Build model
+        # Build model with cost-sensitive loss
         input_dim = X_train_pca.shape[1]
-        fraud_model = model.build_model(input_dim, use_focal_loss=config.USE_FOCAL_LOSS)
+        fraud_model = model.build_model(
+            input_dim, 
+            use_focal_loss=config.USE_FOCAL_LOSS,
+            focal_gamma=config.FOCAL_GAMMA,
+            focal_alpha=config.FOCAL_ALPHA,
+            use_cost_sensitive=config.USE_COST_SENSITIVE,
+            fn_cost=config.FN_COST
+        )
         
         # Create model-specific save path
         model_save_path = os.path.join(

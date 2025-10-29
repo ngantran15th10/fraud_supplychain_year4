@@ -34,7 +34,46 @@ def focal_loss(gamma=2.0, alpha=0.75):
     
     return focal_loss_fixed
 
-def build_model(input_dim, use_focal_loss=True, focal_gamma=1.5, focal_alpha=0.65):
+def cost_sensitive_focal_loss(gamma=1.0, alpha=0.75, fn_cost=10.0):
+    """
+    Cost-Sensitive Focal Loss - Heavily penalize False Negatives (missing frauds)
+    
+    Args:
+        gamma: focusing parameter (lower = less aggressive than standard focal)
+        alpha: balance parameter for fraud class
+        fn_cost: cost multiplier for False Negatives (default: 10x)
+    
+    Philosophy:
+        - Missing a fraud (FN) costs ~$1000 in real money
+        - False alarm (FP) costs ~$20 in investigation
+        - FN should be penalized 50x more than FP
+    
+    Returns:
+        Cost-sensitive focal loss function
+    """
+    def cs_focal_loss_fixed(y_true, y_pred):
+        epsilon = K.epsilon()
+        y_pred = K.clip(y_pred, epsilon, 1. - epsilon)
+        
+        # Standard focal loss component
+        cross_entropy = -y_true * K.log(y_pred) - (1 - y_true) * K.log(1 - y_pred)
+        
+        p_t = y_true * y_pred + (1 - y_true) * (1 - y_pred)
+        focal_weight = K.pow((1 - p_t), gamma)
+        focal = alpha * focal_weight * cross_entropy
+        
+        # Extra penalty for False Negatives
+        # When y_true=1 (actual fraud) but y_pred is low (model misses it)
+        fn_penalty = y_true * (1 - y_pred) * fn_cost
+        
+        # Combined loss
+        total_loss = focal + fn_penalty
+        
+        return K.mean(total_loss)
+    
+    return cs_focal_loss_fixed
+
+def build_model(input_dim, use_focal_loss=True, focal_gamma=1.5, focal_alpha=0.65, use_cost_sensitive=False, fn_cost=10.0):
     """
     Build a Deep Neural Network for fraud detection using combined features
     
@@ -43,6 +82,42 @@ def build_model(input_dim, use_focal_loss=True, focal_gamma=1.5, focal_alpha=0.6
         use_focal_loss: Whether to use Focal Loss (default True)
         focal_gamma: Focal loss gamma parameter (default 1.5)
         focal_alpha: Focal loss alpha parameter (default 0.65)
+        use_cost_sensitive: Whether to use cost-sensitive focal loss (default False)
+        fn_cost: Cost multiplier for False Negatives when use_cost_sensitive=True
+    
+    Returns:
+        Compiled Keras model
+    """
+    model = Sequential([
+        # Input layer with BatchNormalization
+        Dense(256, activation='relu', input_shape=(input_dim,)),
+        BatchNormalization(),
+        Dropout(0.3),
+        
+        # Hidden layer 1
+        Dense(128, activation='relu'),
+        BatchNormalization(),
+        Dropout(0.3),
+        
+        # Hidden layer 2
+        Dense(64, activation='relu'),
+        BatchNormalization(),
+        Dropout(0.2),
+        
+        # Output layer
+        Dense(1, activation='sigmoid')
+    ])
+    
+    # Choose loss function
+    if use_cost_sensitive:
+        loss_fn = cost_sensitive_focal_loss(gamma=focal_gamma, alpha=focal_alpha, fn_cost=fn_cost)
+        print(f"Using Cost-Sensitive Focal Loss (gamma={focal_gamma}, alpha={focal_alpha}, fn_cost={fn_cost})")
+    elif use_focal_loss:
+        loss_fn = focal_loss(gamma=focal_gamma, alpha=focal_alpha)
+        print(f"Using Focal Loss (gamma={focal_gamma}, alpha={focal_alpha})")
+    else:
+        loss_fn = 'binary_crossentropy'
+        print("Using Binary Crossentropy")
     
     Returns:
         Compiled Keras Sequential model

@@ -17,15 +17,17 @@ BATCH_SIZE = 32
 VALIDATION_SPLIT = 0.2
 
 # Evaluation
-THRESHOLD = 0.25  # Optimized threshold for best Recall-Precision balance
+THRESHOLD = 0.22  # Optimized threshold for maximum Recall
 
 # SMOTE
-SAMPLING_STRATEGY = 0.6  # Increased from 0.5: Fraud = 60% of Not Fraud
+SAMPLING_STRATEGY = 0.8  # Increased from 0.6: Fraud = 80% of Not Fraud
 
 # Model settings
-USE_FOCAL_LOSS = True  # Use Focal Loss instead of Binary Crossentropy
-FOCAL_GAMMA = 1.5  # Reduced from 2.0 for less aggressive focusing
-FOCAL_ALPHA = 0.65  # Adjusted from 0.75 for better balance
+USE_FOCAL_LOSS = False  # Disable standard focal loss
+USE_COST_SENSITIVE = True  # Enable cost-sensitive focal loss
+FOCAL_GAMMA = 1.0  # Reduced from 1.5 for less aggressive focusing
+FOCAL_ALPHA = 0.75  # Increased from 0.65 to focus more on fraud class
+FN_COST = 10.0  # False Negative costs 10x more than False Positive
 
 # Ensemble
 USE_ENSEMBLE = True  # Train multiple models with different seeds
