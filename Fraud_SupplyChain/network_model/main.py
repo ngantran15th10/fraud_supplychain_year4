@@ -33,7 +33,12 @@ def main():
         X_train_scaled, y_train, random_state=config.RANDOM_STATE
     )
     
-    # 6. No PCA for network features (only 4 features)
+    # 6. Clean NaN/Inf values
+    import numpy as np
+    X_train_res = np.nan_to_num(X_train_res, nan=0.0, posinf=0.0, neginf=0.0)
+    X_test_scaled = np.nan_to_num(X_test_scaled, nan=0.0, posinf=0.0, neginf=0.0)
+    
+    # 7. No PCA for network features (only 4 features)
     print(f"\nSkipping PCA - using all {X_train_res.shape[1]} network features")
     X_train_final_data = X_train_res
     X_test_final_data = X_test_scaled

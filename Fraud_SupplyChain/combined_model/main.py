@@ -35,7 +35,12 @@ def main():
         X_train_scaled, y_train, random_state=config.RANDOM_STATE
     )
     
-    # 6. Apply PCA for dimensionality reduction
+    # 6. Clean NaN/Inf before PCA
+    import numpy as np
+    X_train_res = np.nan_to_num(X_train_res, nan=0.0, posinf=0.0, neginf=0.0)
+    X_test_scaled = np.nan_to_num(X_test_scaled, nan=0.0, posinf=0.0, neginf=0.0)
+    
+    # 7. Apply PCA for dimensionality reduction
     print(f"\nApplying PCA: {X_train_res.shape[1]} → {config.N_COMPONENTS} components")
     pca = PCA(n_components=config.N_COMPONENTS, random_state=config.RANDOM_STATE)
     X_train_pca = pca.fit_transform(X_train_res)
