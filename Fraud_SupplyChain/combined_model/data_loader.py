@@ -59,7 +59,13 @@ def apply_smote(X_train, y_train, random_state=42, sampling_strategy=0.5):
                           1.0 = fully balanced (default SMOTE)
     """
     print(f"\nBefore SMOTE: {X_train.shape}")
-    print(f"Class distribution: {pd.Series(y_train).value_counts().to_dict()}")
+    print(f"Class distribution: {{0: {(y_train == 0).sum()}, 1: {(y_train == 1).sum()}}}")
+    
+    # Convert to numpy array if DataFrame
+    if isinstance(X_train, pd.DataFrame):
+        X_train = X_train.values
+    if isinstance(y_train, pd.Series):
+        y_train = y_train.values
     
     # Check and handle NaN values
     if np.isnan(X_train).any():
@@ -75,6 +81,6 @@ def apply_smote(X_train, y_train, random_state=42, sampling_strategy=0.5):
     X_train_res, y_train_res = smote.fit_resample(X_train, y_train)
     
     print(f"After SMOTE (strategy={sampling_strategy}): {X_train_res.shape}")
-    print(f"Class distribution: {pd.Series(y_train_res).value_counts().to_dict()}")
+    print(f"Class distribution: {{0: {(y_train_res == 0).sum()}, 1: {(y_train_res == 1).sum()}}}")
     
     return X_train_res, y_train_res
