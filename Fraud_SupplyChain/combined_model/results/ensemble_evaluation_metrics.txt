@@ -1,0 +1,28 @@
+======================================================================
+ENSEMBLE COMBINED MODEL EVALUATION RESULTS
+(Transaction + Network Features - 3 models ensemble)
+======================================================================
+
+Number of models: 3
+Random seeds: [42, 123, 456]
+Threshold: 0.200
+
+Accuracy:  0.7773
+Precision: 0.2015
+Recall:    0.7483
+F1-Score:  0.3175
+ROC-AUC:   0.8216
+
+Confusion Matrix:
+[[2997  848]
+ [  72  214]]
+
+Classification Report:
+              precision    recall  f1-score   support
+
+   Not Fraud       0.98      0.78      0.87      3845
+       Fraud       0.20      0.75      0.32       286
+
+    accuracy                           0.78      4131
+   macro avg       0.59      0.76      0.59      4131
+weighted avg       0.92      0.78      0.83      4131
